@@ -5,4 +5,5 @@ Group: B19-DS-01
 
 ## Structure of repository:
 1. Queuing theory
+2. System Dynamics (Bass model)
 
