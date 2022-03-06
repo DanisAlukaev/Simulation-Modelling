@@ -16,34 +16,40 @@ _root = Path(__file__).parent
 _subscript_dict = {}
 
 _namespace = {
-    "Time": "time",
-    "potential customer concentration": "potential_customer_concentration",
-    "new customers": "new_customers",
-    "contacts of noncustomers with customers": "contacts_of_noncustomers_with_customers",
-    "contacts with customers": "contacts_with_customers",
-
-    "Cont: Our Clients": "customers",
-    "Cont: Potential Clients": "potential_customers",
-    "Cont: Competitor's Clients": "competitor_customers",
-
-    "Const: Efficiency word of mouth": "efficiency_word_of_mouth",
-    "Const: Efficiency of marketing": "efficiency_marketing",
-    "Const: Rate": "sociability",
-
-    "Var: Total population": "total_market",
-    "Var: Word of Mouth Demand": "word_of_mouth_demand",
-    "Var: Marketing Demand": "marketing_demand",
-
-    "P: Satisfied (Customers Cont.)": "p11",
-    "P: Disappointed (Customers Cont.)": "p13",
-    "P: Satisfied (Competitor's Cont.)": "p21",
-    "P: Disappointed (Competitor's Cont.)": "p23",
-
     "TIME": "time",
     "FINAL TIME": "final_time",
     "INITIAL TIME": "initial_time",
     "SAVEPER": "saveper",
     "TIME STEP": "time_step",
+    "Time": "time",
+
+    "Our Customers": "our_customers",
+    "Potential Customers": "potential_customers",
+    "Competitor Customers": "competitor_customers",
+
+    "New Customers": "our_gain",
+    "New Potential Customers": "potential_gain",
+    "New Competitor Customers": "competitor_gain",
+
+    "Potential Customers -> Our Customers": "potential2our",
+    "Potential Customers -> Competitor Customers": "potential2competitor",
+    "Our Customers -> Potential Customers": "our2potential",
+    "Competitor Customers -> Potential Customers": "competitor2potential",
+    "Our Customers -> Competitor Customers": "our2competitor",
+    "Competitor Customers -> Our Customers": "competitor2our",
+    "Demand from Marketing": "marketing_demand",
+    "Concentration of Potential Customers": "potential_customers_concentration",
+    "Total population (actual)": "total_market",
+
+    "P11": "p11",
+    "P13": "p13",
+    "P21": "p21",
+    "P23": "p23",
+    "Word of Mouth impact": "efficiency_word_of_mouth",
+    "Marketing impact": "efficiency_marketing",
+    "Rate": "sociability",
+    "Share of Dissatisfied": "k",
+    "Luring Threshold": "tr"
 }
 
 _dependencies = {
@@ -78,7 +84,6 @@ _dependencies = {
 _control_vars = {
     "initial_time": lambda: 0,
     "final_time": lambda: 100,
-    # TODO: scale rate accordingly
     "time_step": lambda: 1,
     "saveper": lambda: time_step(),
 }
@@ -154,100 +159,342 @@ def time_step():
 ##########################################################################
 
 def our_customers():
+    """
+    Real Name: Our Customers
+    Original Eqn: INTEG(-our gain, 1000)
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     return Integ(lambda: our_gain(), lambda: 1000, "_integ_customers")
 
 
 def potential_customers():
+    """
+    Real Name: Potential Customers
+    Original Eqn: INTEG(-potential gain, 10e05)
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     return Integ(lambda: potential_gain(), lambda: 1e05, "_integ_potential_customers")
 
 
 def competitor_customers():
-    return  Integ(lambda: competitor_gain(), lambda: 1000, "_integ_customers")
+    """
+    Real Name: Competitor Customers
+    Original Eqn: INTEG(-competitor gain, 1000)
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
+    return Integ(lambda: competitor_gain(), lambda: 1000, "_integ_customers")
 
 
 def our_gain():
-    return 
+    """
+    Real Name: New Customers
+    Original Eqn: potential2our + competitor2our + our2potential + our2competitor 
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
+    return potential2our() + competitor2our() - our2potential() - our2competitor() 
 
 
 def potential_gain():
-    return 
+    """
+    Real Name: New Potential Customers
+    Original Eqn: our2potential + competitor2potential + potential2our + potential2competitor 
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
+    return our2potential() + competitor2potential() - potential2our() - potential2competitor()
 
 
 def competitor_gain():
-    return 
+    """
+    Real Name: New Competitor Customers
+    Original Eqn: potential2competitor + our2competitor + competitor2potential + competitor2our 
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
 
 
-def pc_cl():
-    marketing_demand = efficiency_marketing() * potential_customers()
+    """
+    return potential2competitor() + our2competitor() - competitor2potential() - competitor2our()
+
+
+def potential2our():
+    """
+    Real Name: Potential Customers -> Our Customers
+    Original Eqn: marketing_demand + (efficiency_wom * rate * potential_customers * our_customers * p11) / total_market
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     satisfied_customers = our_customers() * p11()
-    potential_customers_concentration = potential_customers() / total_market()
     contacts_with_customers = satisfied_customers * sociability()
-    contacts_of_noncustomers_with_customers = contacts_with_customers * potential_customers_concentration 
+    contacts_of_noncustomers_with_customers = contacts_with_customers * potential_customers_concentration()
     word_of_mouth_demand = efficiency_word_of_mouth() * contacts_of_noncustomers_with_customers
-    return marketing_demand + word_of_mouth_demand
+    return marketing_demand() + word_of_mouth_demand
 
 
-def pc_comp():
-    marketing_demand = efficiency_marketing() * potential_customers()
+def potential2competitor():
+    """
+    Real Name: Potential Customers -> Competitor Customers
+    Original Eqn: marketing_demand + (efficiency_wom * rate * potential_customers * competitor_customers * p21) / total_market
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     satisfied_customers = competitor_customers() * p21()
-    potential_customers_concentration = potential_customers() / total_market()
     contacts_with_customers = satisfied_customers * sociability()
-    contacts_of_noncustomers_with_customers = contacts_with_customers * potential_customers_concentration 
+    contacts_of_noncustomers_with_customers = contacts_with_customers * potential_customers_concentration()
     word_of_mouth_demand = efficiency_word_of_mouth() * contacts_of_noncustomers_with_customers
-    return marketing_demand + word_of_mouth_demand
+    return marketing_demand() + word_of_mouth_demand
 
 
-def cl_pc():
+def our2potential():
+    """
+    Real Name: Our Customers -> Potential Customers
+    Original Eqn: our_customers * p13 * share_dissatisfied
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     return our_customers() * p13() * k()
 
 
-def comp_pc():
+def competitor2potential():
+    """
+    Real Name: Competitor Customers -> Potential Customers
+    Original Eqn: competitor_customers * p23 * share_dissatisfied
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     return competitor_customers() * p23() * k()
 
 
-def cl_comp():
+def our2competitor():
+    """
+    Real Name: Our Customers -> Competitor Customers
+    Original Eqn: luring_threshold * efficiency_word_of_mouth * rate * competitor_customers * p21 * our_customers * (1 - p11 - share_dissatisfied * p13) / total_market
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     return tr() * efficiency_word_of_mouth() * sociability() * competitor_customers() * p21() * our_customers() * (1 - p11() - k() * p13()) / total_market()
 
 
-def comp_cl():
+def competitor2our():
+    """
+    Real Name: Competitor Customers -> Our Customers
+    Original Eqn: luring_threshold * efficiency_word_of_mouth * rate * competitor_customers * p11 * our_customers * (1 - p21 - share_dissatisfied * p23) / total_market
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
     return tr() * efficiency_word_of_mouth() * sociability() * our_customers() * p11() * competitor_customers() * (1 - p21() - k() * p23()) / total_market()
 
 
+def marketing_demand():
+    """
+    Real Name: Demand from Marketing
+    Original Eqn: Efficiency Marketing / Potential Customers
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
+    return efficiency_marketing() * potential_customers()
+
+
+def potential_customers_concentration():
+    """
+    Real Name: Concentration of Potential Customers
+    Original Eqn: Potential Customers / Total Market
+    Units: float
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
+    return potential_customers() / total_market()
+
+
+def total_market():
+    """
+    Real Name: Total population (actual)
+    Original Eqn: Our Customers + Potential Customers + Competitor Customers
+    Units: person
+    Limits: (None, None)
+    Type: component
+    Subs: None
+
+
+    """
+    return our_customers() + potential_customers() + competitor_customers()
+
+
 def p11():
+    """
+    Real Name: P11
+    Original Eqn: 0.5
+    Units: float
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
     return 0.5
 
 
 def p13():
+    """
+    Real Name: P13
+    Original Eqn: 0.5
+    Units: float
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
     return 0.5
 
 
 def p21():
+    """
+    Real Name: P21
+    Original Eqn: 0.5
+    Units: float
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
     return 0.5
 
 
 def p23():
+    """
+    Real Name: P23
+    Original Eqn: 0.5
+    Units: float
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
     return 0.5
 
 
-def total_market():
-    return our_customers() + potential_customers() + competitor_customers()
-
-
 def efficiency_word_of_mouth():
+    """
+    Real Name: Word of Mouth impact
+    Original Eqn: 0.011
+    Units: person / contact
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
     return 0.011
 
 
 def efficiency_marketing():
+    """
+    Real Name: Marketing impact
+    Original Eqn: 0.015
+    Units: person / contact
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
     return 0.015
 
 
 def sociability():
+    """
+    Real Name: Rate
+    Original Eqn: 100
+    Units: contact / person / Month
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
     return 100
 
 
 def k():
-    return 2 * efficiency_marketing() / (2 * efficiency_marketing() + 2 * efficiency_word_of_mouth())
+    """
+    Real Name: Share of Dissatisfied
+    Original Eqn: Market_impact / (WoM_impact + Market_impact)
+    Units: float
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
+    return efficiency_marketing() / (efficiency_marketing() + efficiency_word_of_mouth())
 
 
 def tr():
-    return 2 * efficiency_word_of_mouth() / (2 * efficiency_marketing() + 2 * efficiency_word_of_mouth())
+    """
+    Real Name: Share of Dissatisfied
+    Original Eqn: WoM_impact / (WoM_impact + Market_impact)
+    Units: float
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+    """
+    return efficiency_word_of_mouth() / (efficiency_marketing() + efficiency_word_of_mouth())
