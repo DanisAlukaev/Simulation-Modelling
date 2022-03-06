@@ -53,28 +53,118 @@ _namespace = {
 }
 
 _dependencies = {
-    "potential_customer_concentration": {"potential_customers": 1, "total_market": 1},
-    "new_customers": {"word_of_mouth_demand": 1},
-    "contacts_of_noncustomers_with_customers": {
-        "contacts_with_customers": 1,
-        "potential_customer_concentration": 1,
-    },
-    "contacts_with_customers": {"customers": 1, "sociability": 1},
-    "customers": {"_integ_customers": 1},
-    "efficiency_word_of_mouth": {},
-    "potential_customers": {"_integ_potential_customers": 1},
-    "sociability": {},
-    "total_market": {"customers": 1, "potential_customers": 1},
-    "word_of_mouth_demand": {
-        "contacts_of_noncustomers_with_customers": 1,
-        "efficiency_word_of_mouth": 1,
-    },
     "final_time": {},
     "initial_time": {},
     "saveper": {"time_step": 1},
     "time_step": {},
-    "_integ_customers": {"initial": {}, "step": {"new_customers": 1}},
-    "_integ_potential_customers": {"initial": {}, "step": {"new_customers": 1}},
+
+    "our_customers": {"_integ_our_customers": 1},
+    "potential_customers": {"_integ_potential_customers": 1},
+    "competitor_customers": {"_integ_competitor_customers": 1},
+
+    "_integ_our_customers": {"initial": {}, "step": {"our_gain": 1}},
+    "_integ_potential_customers": {"initial": {}, "step": {"potential_gain": 1}},
+    "_integ_competitor_customers": {"initial": {}, "step": {"competitor_gain": 1}},
+
+    "our_gain": {
+        "potential2our": 1,
+        "competitor2our": 1,
+        "our2potential": 1,
+        "our2competitor": 1
+    },
+    "potential_gain": {
+        "our2potential": 1,
+        "competitor2potential": 1,
+        "potential2our": 1,
+        "potential2competitor": 1
+    },
+    "competitor_gain": {
+        "potential2competitor": 1,
+        "our2competitor": 1,
+        "competitor2potential": 1,
+        "competitor2our": 1
+    },
+
+    "potential2our": {
+        "our_customers": 1,
+        "p11": 1,
+        "sociability": 1,
+        "potential_customers_concentration": 1,
+        "efficiency_word_of_mouth": 1,
+        "marketing_demand": 1
+    },
+    "potential2competitor": {
+        "competitor_customers": 1,
+        "p21": 1,
+        "sociability": 1,
+        "potential_customers_concentration": 1,
+        "efficiency_word_of_mouth": 1,
+        "marketing_demand": 1
+
+    },
+    "our2potential": {
+        "our_customers": 1,
+        "p13": 1,
+        "k": 1
+    },
+    "competitor2potential": {
+        "competitor_customers": 1,
+        "p23": 1,
+        "k": 1
+    },
+    "our2competitor": {
+        "tr": 1,
+        "efficiency_word_of_mouth": 1,
+        "sociability": 1,
+        "competitor_customers": 1,
+        "p21": 1,
+        "our_customers": 1,
+        "p11": 1,
+        "k": 1,
+        "p13": 1,
+        "total_market": 1
+    },
+    "competitor2our": {
+        "tr": 1,
+        "efficiency_word_of_mouth": 1,
+        "sociability": 1,
+        "our_customers": 1,
+        "p11": 1,
+        "competitor_customers": 1,
+        "p21": 1,
+        "k": 1,
+        "p23": 1,
+        "total_market": 1
+    },
+    "marketing_demand": {
+        "efficiency_marketing": 1,
+        "potential_customers": 1
+    },
+    "potential_customers_concentration": {
+        "potential_customers": 1,
+        "total_market": 1
+    },
+    "total_market": {
+        "our_customers": 1,
+        "potential_customers": 1,
+        "competitor_customers": 1
+    },
+
+    "p11": {},
+    "p13": {},
+    "p21": {},
+    "p23": {},
+    "efficiency_word_of_mouth": {},
+    "efficiency_marketing": {},
+    "sociability": {},
+    "k": {
+        "efficiency_marketing": 1,
+        "efficiency_word_of_mouth": 1
+    },
+    "tr": {
+        "efficiency_word_of_mouth": 1,
+        "efficiency_marketing": 1
+    },
 }
 
 ##########################################################################
@@ -161,7 +251,7 @@ def time_step():
 def our_customers():
     """
     Real Name: Our Customers
-    Original Eqn: INTEG(-our gain, 1000)
+    Original Eqn: INTEG(-our gain, 0)
     Units: person
     Limits: (None, None)
     Type: component
@@ -169,7 +259,7 @@ def our_customers():
 
 
     """
-    return Integ(lambda: our_gain(), lambda: 1000, "_integ_customers")
+    return _integ_our_customers()
 
 
 def potential_customers():
@@ -183,13 +273,13 @@ def potential_customers():
 
 
     """
-    return Integ(lambda: potential_gain(), lambda: 1e05, "_integ_potential_customers")
+    return _integ_potential_customers()
 
 
 def competitor_customers():
     """
     Real Name: Competitor Customers
-    Original Eqn: INTEG(-competitor gain, 1000)
+    Original Eqn: INTEG(-competitor gain, 0)
     Units: person
     Limits: (None, None)
     Type: component
@@ -197,7 +287,16 @@ def competitor_customers():
 
 
     """
-    return Integ(lambda: competitor_gain(), lambda: 1000, "_integ_customers")
+    return _integ_competitor_customers()
+
+
+_integ_our_customers = Integ(lambda: our_gain(), lambda: 0, "_integ_customers")
+
+
+_integ_potential_customers = Integ(lambda: potential_gain(), lambda: 1e05, "_integ_potential_customers")
+
+
+_integ_competitor_customers = Integ(lambda: competitor_gain(), lambda: 0, "_integ_customers")
 
 
 def our_gain():
@@ -443,7 +542,7 @@ def efficiency_word_of_mouth():
 
 
     """
-    return 0.011
+    return 0.015
 
 
 def efficiency_marketing():
@@ -457,7 +556,7 @@ def efficiency_marketing():
 
 
     """
-    return 0.015
+    return 0.011
 
 
 def sociability():
