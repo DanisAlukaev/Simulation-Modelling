@@ -173,7 +173,7 @@ _dependencies = {
 
 _control_vars = {
     "initial_time": lambda: 0,
-    "final_time": lambda: 100,
+    "final_time": lambda: final_time(),
     "time_step": lambda: 1,
     "saveper": lambda: time_step(),
 }
@@ -557,6 +557,20 @@ def efficiency_marketing():
 
     """
     return 0.011
+
+
+def final_time():
+    """
+    Real Name: FINAL TIME
+    Original Eqn: 100
+    Units: int
+    Limits: (None, None)
+    Type: constant
+    Subs: None
+
+
+    """
+    return 100
 
 
 def sociability():
