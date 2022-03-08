@@ -4,6 +4,5 @@ Email: d.alukaev@innopolis.university \
 Group: B19-DS-01 
 
 ## Structure of repository:
-1. Queuing theory
+1. Queuing theory (Supply Chain)
 2. System Dynamics (Bass model)
-
